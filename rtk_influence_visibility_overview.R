@@ -13,9 +13,9 @@ View(rtk)
 names(rtk)
 
 rtk_ = rtk[c(1:3,5:9,15:17)]
-colnames(rtk_) = c("country", "2016_rtk_usaid", "2016_rtk_gf", "2017_rtk_budget", 
-                   "2016_non-rtk_com", "2017_non-rtk_com_budget", "2016_TA", 
-                   "2017_TA_budget", "G4", "G5", "G6")
+colnames(rtk_) = c("country", "rtk_usaid_2016", "rtk_gf_2016", "rtk_budget_2017", 
+                   "non_rtk_com_2016", "non_rtk_com_budget_2017", "TA_2016", 
+                   "TA_budget_2017", "G4", "G5", "G6")
 rtk_ = rtk_[-1,] #exlude row 1, go back to excel formatting
 #c("Angola", "Caribbean", "Central America", "Burma", "Guyana", "Ukraine", "Namibia")
 rtk_ =rtk_[-c(32:33),] #exclude empty rows in the end
@@ -72,12 +72,16 @@ pie + scale_fill_brewer("Expense") + blank_theme +
   geom_text(aes(x = 1,y = dfp$pos,label = percent(value/totalB)),size = 5)
 #  facet_grid(facets =.~group,labeller = label_value)
 
-#Influence levels (numeric)
-#(rtk_$`2016_rtk_gf`+rtk_$`2016_rtk_usaid`) 
-rtk_$ghusaid = ifelse((rtk_[,2]+rtk_[,3]) != 0, rtk_[,2]/(rtk_[,2]+rtk_[,3]),0)
 
-rtk_$influence = log(rtk_$`2016_rtk_usaid`*rtk_$ghusaid +rtk_$`2016_TA` + rtk_$`2016_non-rtk_com`+1)
-plot(rtk_$influence)
+#BUBBLE plot
+
+#Influence levels (numeric)
+#(rtk_$rtk_gf_2016+rtk_$rtk_usaid_2016)  
+rtk_$ghusaid = ifelse((rtk_[,2]+rtk_[,3]) != 0, rtk_[,2]/(rtk_[,2]+rtk_[,3]),0)
+influence = rtk_$rtk_usaid_2016*rtk_$ghusaid +rtk_$TA_2016  + rtk_$non_rtk_com_2016
+rtk_$influence = log(influence +1)
+plot(influence)
+plot(rtk_$)
 
 #visiblity levels
 level = c('Low','Low-medium', 'Medium','High' ) #visibility
