@@ -39,6 +39,7 @@ pie(totals[c(1,4,6)], labels = c("RTK", "commodities (non-RTK)", "TA"),
 totals[c(1,4,6)]/totalB
 #rough idea on how money is divided
 
+dev.new()
 #GGPLOT2 method
 dfp = data.frame(
   group = c("RTK", "Commodities (non-RTK)", "TA"),
@@ -69,7 +70,9 @@ dfp = mutate(dfp, pos = cumsum(value) - value/3)
 
 pie + scale_fill_brewer("Expense") + blank_theme +
   theme(axis.text.x = element_blank())+
-  geom_text(aes(x = 1,y = dfp$pos,label = percent(value/totalB)),size = 5)
+  geom_text(aes(x = 1,y = dfp$pos,label = percent(value/totalB)),size = 5)+
+  labs(title = paste("RTK data on commodites and TA as of 20170706 (Total " , totalb, ")"))
+
 #  facet_grid(facets =.~group,labeller = label_value)
 
 
@@ -79,9 +82,7 @@ pie + scale_fill_brewer("Expense") + blank_theme +
 #(rtk_$rtk_gf_2016+rtk_$rtk_usaid_2016)  
 rtk_$ghusaid = ifelse((rtk_[,2]+rtk_[,3]) != 0, rtk_[,2]/(rtk_[,2]+rtk_[,3]),0)
 influence = rtk_$rtk_usaid_2016*rtk_$ghusaid +rtk_$TA_2016  + rtk_$non_rtk_com_2016
-rtk_$influence = log(influence +1)
-plot(influence)
-plot(rtk_$)
+rtk_$influence = influence/100000
 
 #visiblity levels
 level = c('Low','Low-medium', 'Medium','High' ) #visibility
@@ -95,19 +96,24 @@ rtk_$visibility  <- factor(rtk_$visibility  , levels=level,
                            ordered = is.ordered(levels_V)) 
 
 #investment
-rtk_$investment = rtk_$`2016_rtk_usaid`+rtk_$`2016_non-rtk_com` + rtk_$`2016_TA`
+rtk_$investment = rtk_$rtk_usaid_2016+rtk_$non_rtk_com_2016 + rtk_$TA_2016
 
+#TA should increase visibility 
+#(TA influences the capability at site level/ TA is at central)
+#TA is more about personel
+#if investments are occuring in a country, should we have greater influence to what is happening
+#i.e. we should see stock levels
 
 #SIZE
-size <- sqrt(rtk_$investment/pi)
+size <- sqrt(rtk_$investment)/pi
 N = nrow(rtk_)
 #COLOR
 rtk_ = rtk_[order(rtk_$visibility),]
-rtk_$op = unlist(sapply(table(rtk_$visibility), heat.colors))
+rtk_$op = unlist(sapply(table(rtk_$visibility), topo.colors))
 # leg_rtk = rtk_$country; leg_op = rtk_$op #legend colors
 
 #ORDER infleunce and visibility by increasing; investment by decreasing
-rtk_= rtk_[order(-rtk_$influence,rtk_$visibility, rtk_$investment),]
+rtk_= rtk_[with(rtk_, order(desc(visibility),desc(influence), desc(investment))),]
 
 # dev.new(width=6, height=5) #customize plot size
 # plot(table(rtk_$influence, rtk_$visibility, dnn = c('Influence', 'Visibility')))
@@ -120,7 +126,7 @@ layout(cbind(1,2), widths = c(3,1)); layout.show(2)
 par(mar = c(4, 4, 2, 2), oma = c(0, 0, 0, 0))
 with(rtk_, {
   palette(rtk_$op)
-  symbols(rtk_$visibility, rtk_$influence, circles = size/16, 
+  symbols(rtk_$visibility, rtk_$influence, circles = size, 
           bg = 1:N, #main = "Influence and Visibility of USAID Investment by Country",
           ylab = "Influence", xlab = "Visibility")
 })
