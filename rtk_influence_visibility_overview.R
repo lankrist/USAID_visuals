@@ -4,7 +4,8 @@ library(graphics) #piechar  t()
 library(ggplot2)
 library(scales) #format labels in percent
 library(plyr) #mutate
-library(dplyr) #%>%
+library(grid) #for multiplot function
+library(gridExtra)
 #setwd('USAID_Internship2017/dataset/')
 
 rtk=read.csv(file = 'Global RTK Investment Profile_edit.csv', header = T, stringsAsFactors = F)
@@ -119,7 +120,7 @@ rtk_= rtk_[with(rtk_, order(desc(visibility),desc(influence), desc(investment)))
 # plot(table(rtk_$influence, rtk_$visibility, dnn = c('Influence', 'Visibility')))
 
 dev.off()
-dev.new(width=10, height=5) #customize plot size
+dev.new(width=10, height=8) #customize plot size
 layout(cbind(1,2), widths = c(3,1)); layout.show(2)
 
 #GRAPH
@@ -146,13 +147,75 @@ legend("center",legend=rtk_$country, y= NULL, ,pch = 15,
 #test to see how graph is ordered
 table(rtk_$influence, rtk_$visibility)
 
-#Investment by country, colored by influence
-rtk_bar = rtk_[order(rtk_$investment),]
-View(rtk_bar)
-INF_N = length(levels(rtk_bar$influence))
+#divide by country
+#divide by Global fund VS USAID
 
-  op =heat.colors(n = INF_N)
-  palette(op)
-  barplot(rtk_bar$investment, rtk_bar$influence,bg = 1:INF_N, xlab = "Countries")
+#Investment by country
+dev.new(width = 12, height = 8)
 
-~rtk_bar$influence
+###############################################################333333
+# Multiple plot function from Cookbook for R, by Winston Chang 
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  require(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+#########################################################################
+
+
+plots2016 = list()
+for(i in 1:nrow(rtk_)){
+  rdfp = data.frame(
+    Group = c("RTK provided by USAID", "RTK provided by GF", "Commodities (non-RTK)", "TA"),
+    value = c(rtk_[i, "rtk_usaid_2016"], rtk_[i, "rtk_gf_2016"], 
+              rtk_[i, "non_rtk_com_2016"], rtk_[i, "TA_2016"])
+  )
+  bp = ggplot(rdfp, aes(x = "", y = value, fill = Group)) + geom_bar(width = 1, stat = "identity")
+  pie = bp + coord_polar(theta = "y", start = 0)
+  plots2016[[i]] = pie + blank_theme + 
+    theme(axis.text.x =element_blank(), legend.position="none")+
+    labs(title = paste('2016 Commodity & TA Expense for', rtk_[i,"country"]))
+  
+}
+plots2016
+multiplot(plotlist= plots2016, cols =4)
