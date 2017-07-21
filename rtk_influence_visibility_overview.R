@@ -97,7 +97,7 @@ rtk_$visibility  <- factor(rtk_$visibility  , levels=level,
                            ordered = is.ordered(levels_V)) 
 
 #investment
-rtk_$investment = rtk_$rtk_usaid_2016+rtk_$non_rtk_com_2016 + rtk_$TA_2016
+rtk_$investment = rtk_$rtk_budget_2017+rtk_$non_rtk_com_budget_2017 + rtk_$TA_budget_2017
 
 #TA should increase visibility 
 #(TA influences the capability at site level/ TA is at central)
@@ -110,7 +110,7 @@ size <- sqrt(rtk_$investment)/pi
 N = nrow(rtk_)
 #COLOR
 rtk_ = rtk_[order(rtk_$visibility),]
-rtk_$op = unlist(sapply(table(rtk_$visibility), topo.colors))
+rtk_$op = unlist(sapply(table(rtk_$visibility), heat.colors))
 # leg_rtk = rtk_$country; leg_op = rtk_$op #legend colors
 
 #ORDER infleunce and visibility by increasing; investment by decreasing
@@ -153,7 +153,8 @@ table(rtk_$influence, rtk_$visibility)
 #Investment by country
 dev.new(width = 12, height = 8)
 
-###############################################################333333
+###########################################################################
+########################################################################## 
 # Multiple plot function from Cookbook for R, by Winston Chang 
 #
 # ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
@@ -204,6 +205,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 
 
 plots2016 = list()
+ 
 for(i in 1:nrow(rtk_)){
   rdfp = data.frame(
     Group = c("RTK provided by USAID", "RTK provided by GF", "Commodities (non-RTK)", "TA"),
@@ -213,9 +215,41 @@ for(i in 1:nrow(rtk_)){
   bp = ggplot(rdfp, aes(x = "", y = value, fill = Group)) + geom_bar(width = 1, stat = "identity")
   pie = bp + coord_polar(theta = "y", start = 0)
   plots2016[[i]] = pie + blank_theme + 
-    theme(axis.text.x =element_blank(), legend.position="none")+
+    theme(axis.text.x =element_blank(), legend.position = "none") +
     labs(title = paste('2016 Commodity & TA Expense for', rtk_[i,"country"]))
   
 }
-plots2016
-multiplot(plotlist= plots2016, cols =4)
+
+###########################################################################
+###########################################################################
+g_legend<-function(a.gplot){
+  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  legend
+}
+###########################################################################
+dev.new()
+plots2016[[1]]
+
+legend <- g_legend(plots2016[[1]])#saves legend
+
+for(i in 0:((nrow(rtk_)/6)-1)){
+  dev.new()
+  layout(matrix(c(1:6), 2, 3, byrow = T))  #layout.show(6)
+   for( j in 1:6){
+     plots2016[[(j+6*i)]]
+     
+   }  
+}
+
+
+dev.new(width = 12, height = 8)
+plots2016_1 = list()
+plots2016_2 = list()
+plots2016_3 = list()
+plots2016_4 = list()
+for(i in 1:6){
+  plots2016_4[[i]]= plots2016[[i+18]]
+}
+multiplot(plotlist= plots2016_4, cols =3)
